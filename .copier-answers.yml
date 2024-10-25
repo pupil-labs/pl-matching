@@ -1,0 +1,14 @@
+# Changes here will be overwritten by Copier
+_commit: ab05b5d
+_src_path: gh:pupil-labs/pl-template
+author_email: info@pupil-labs.com
+author_fullname: Pupil Labs
+author_username: pupil-labs
+copyright_license: MIT License
+project_description: Functionality for matching timeseries data.
+project_name: pl-matching
+python_package_distribution_name: pupil_labs_matching
+python_package_import_name: matching
+repository_name: pl-matching
+repository_namespace: pupil-labs
+repository_provider: github.com

@@ -18,7 +18,11 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 
-dependencies = []
+dependencies = [
+    "pupil-labs-video",
+    "pandas>=2.2.3",
+    "pandas-stubs>=2.2.3.241009",
+]
 
 [project.urls]
 Homepage = "https://pupil-labs.github.io/pl-matching"
@@ -35,7 +39,6 @@ dev-dependencies = [
     "deptry>=0.20.0",
     "tox-uv>=1.11.3",
     "pytest-cov>=4.0.0",
-
     # docs
     "markdown-callouts>=0.4",
     "markdown-exec>=1.8",
@@ -50,6 +53,9 @@ dev-dependencies = [
     # YORE: EOL 3.10: Remove line.
     "tomli>=2.0; python_version < '3.11'",
 ]
+
+[tool.uv.sources]
+pupil-labs-video = { path = "/home/marc/pupil_labs/pl-video", editable = true }
 
 [build-system]
 requires = ["setuptools >= 61.0"]

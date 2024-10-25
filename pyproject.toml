@@ -52,10 +52,12 @@ dev-dependencies = [
     "mkdocstrings[python]>=0.25",
     # YORE: EOL 3.10: Remove line.
     "tomli>=2.0; python_version < '3.11'",
+    "pupil-labs-neon-recording",
 ]
 
 [tool.uv.sources]
 pupil-labs-video = { path = "/home/marc/pupil_labs/pl-video", editable = true }
+pupil-labs-neon-recording = { path = "/home/marc/pupil_labs/pl-neon-recording", editable = true }
 
 [build-system]
 requires = ["setuptools >= 61.0"]

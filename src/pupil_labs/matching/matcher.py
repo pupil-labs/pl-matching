@@ -7,7 +7,7 @@ import pandas as pd
 
 from pupil_labs.video.array_like import ArrayLike
 
-TimesArray = npt.NDArray[np.int32]
+TimesArray = npt.NDArray[np.number]
 
 
 class MatchingMethod(Enum):
@@ -21,9 +21,12 @@ class Sensor(ArrayLike):
     timestamps: TimesArray
 
 
-class Sampler(ArrayLike[Sequence]):
+class Matcher(ArrayLike[Sequence]):
     def __init__(
-        self, target_ts: TimesArray, sensors: Sequence[Sensor], method: MatchingMethod
+        self,
+        target_ts: TimesArray,
+        sensors: Sequence[Sensor],
+        method: MatchingMethod,
     ) -> None:
         if len(sensors) == 0:
             raise ValueError("At least one sensor is required")

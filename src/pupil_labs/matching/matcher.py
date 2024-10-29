@@ -79,6 +79,10 @@ class Matcher(ArrayLike[Sequence]):
                 if self.include_ts:
                     val = (ts.timestamps[target_idx], val)
                 result.append(val)
+
+            if len(result) == 1:
+                return result[0]
+
             return result
         else:
             raise NotImplementedError

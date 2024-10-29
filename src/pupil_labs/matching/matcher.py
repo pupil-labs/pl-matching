@@ -17,7 +17,7 @@ class MatchingMethod(Enum):
     INTERPOLATE = "interpolate"
 
 
-class Sensor(ArrayLike):
+class Timeseries(ArrayLike):
     timestamps: TimesArray
 
 
@@ -25,28 +25,31 @@ class Matcher(ArrayLike[Sequence]):
     def __init__(
         self,
         target_ts: TimesArray,
-        sensors: Sequence[Sensor],
+        timeseries: Timeseries | Sequence[Timeseries],
         method: MatchingMethod,
         tolerance: Optional[float] = None,
-        include_sensor_ts: bool = False,
+        include_ts: bool = False,
     ) -> None:
-        if len(sensors) == 0:
-            raise ValueError("At least one sensor is required")
+        if isinstance(timeseries, Timeseries):
+            timeseries = [timeseries]
+
+        if len(timeseries) == 0:
+            raise ValueError("At least one timeseries is required")
 
         self.target_ts = target_ts
-        self.sensors = sensors
+        self.timeseries = timeseries
         self.method = method
         self.tolerance = tolerance
-        self.include_sensor_ts = include_sensor_ts
+        self.include_ts = include_ts
 
         target_ts_df = pd.DataFrame(target_ts, columns=["ts"])
         target_ts_df.index.name = "target"
         target_ts_df.reset_index(inplace=True)
 
         dfs = []
-        for sensor in sensors:
-            df = pd.DataFrame(sensor.timestamps, columns=["ts"])
-            df.index.name = "sensor"
+        for ts in timeseries:
+            df = pd.DataFrame(ts.timestamps, columns=["ts"])
+            df.index.name = "data"
             df.reset_index(inplace=True)
             dfs.append(df)
 
@@ -57,6 +60,8 @@ class Matcher(ArrayLike[Sequence]):
                     target_ts_df, df, on="ts", direction="nearest", tolerance=tolerance
                 )
                 self.matching_dfs.append(matched)
+        else:
+            raise NotImplementedError
 
     def __len__(self) -> int:
         return len(self.target_ts)
@@ -68,11 +73,11 @@ class Matcher(ArrayLike[Sequence]):
     def __getitem__(self, key: int | slice) -> Sequence | ArrayLike[Sequence]:
         if isinstance(key, int):
             result = []
-            for sensor, matched in zip(self.sensors, self.matching_dfs):
-                target_idx = int(matched.loc[key, "sensor"])
-                val = sensor[target_idx]
-                if self.include_sensor_ts:
-                    val = (sensor.timestamps[target_idx], val)
+            for ts, matched in zip(self.timeseries, self.matching_dfs):
+                target_idx = int(matched.loc[key, "data"])
+                val = ts[target_idx]
+                if self.include_ts:
+                    val = (ts.timestamps[target_idx], val)
                 result.append(val)
             return result
         else:

@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Iterator, Sequence, overload
+from typing import Iterator, Optional, Sequence, overload
 
 import numpy as np
 import numpy.typing as npt
@@ -27,6 +27,8 @@ class Matcher(ArrayLike[Sequence]):
         target_ts: TimesArray,
         sensors: Sequence[Sensor],
         method: MatchingMethod,
+        tolerance: Optional[float] = None,
+        include_sensor_ts: bool = False,
     ) -> None:
         if len(sensors) == 0:
             raise ValueError("At least one sensor is required")
@@ -34,6 +36,8 @@ class Matcher(ArrayLike[Sequence]):
         self.target_ts = target_ts
         self.sensors = sensors
         self.method = method
+        self.tolerance = tolerance
+        self.include_sensor_ts = include_sensor_ts
 
         target_ts_df = pd.DataFrame(target_ts, columns=["ts"])
         target_ts_df.index.name = "target"
@@ -49,7 +53,9 @@ class Matcher(ArrayLike[Sequence]):
         self.matching_dfs = []
         if method == MatchingMethod.NEAREST:
             for df in dfs:
-                matched = pd.merge_asof(target_ts_df, df, on="ts", direction="nearest")
+                matched = pd.merge_asof(
+                    target_ts_df, df, on="ts", direction="nearest", tolerance=tolerance
+                )
                 self.matching_dfs.append(matched)
 
     def __len__(self) -> int:
@@ -63,8 +69,10 @@ class Matcher(ArrayLike[Sequence]):
         if isinstance(key, int):
             result = []
             for sensor, matched in zip(self.sensors, self.matching_dfs):
-                target_idx = matched.loc[key, "sensor"].item()
+                target_idx = int(matched.loc[key, "sensor"])
                 val = sensor[target_idx]
+                if self.include_sensor_ts:
+                    val = (sensor.timestamps[target_idx], val)
                 result.append(val)
             return result
         else:

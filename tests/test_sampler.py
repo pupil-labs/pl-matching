@@ -1,30 +1,8 @@
-from typing import Iterator, overload
-
 import numpy as np
-import numpy.typing as npt
 import pytest
 
-from pupil_labs.matching.matcher import Matcher, MatchingMethod, Sensor
-from pupil_labs.video.array_like import ArrayLike
-
-
-class ArraySensor(Sensor):
-    def __init__(self, timestamps: npt.NDArray[np.int32]):
-        self.timestamps = timestamps
-
-    @overload
-    def __getitem__(self, key: int, /) -> int: ...
-    @overload
-    def __getitem__(self, key: slice, /) -> ArrayLike[int]: ...
-    def __getitem__(self, key: int | slice, /) -> int | ArrayLike[int]:
-        return self.timestamps[key]
-
-    def __len__(self) -> int:
-        return len(self.timestamps)
-
-    def __iter__(self) -> Iterator[int]:
-        for i in range(len(self)):
-            yield self[i]
+from pupil_labs.matching.matcher import Matcher, MatchingMethod
+from pupil_labs.neon_recording.sensors.numpy_timeseries import NumpyTimeseries
 
 
 @pytest.mark.parametrize(
@@ -35,9 +13,9 @@ class ArraySensor(Sensor):
         (np.arange(0, 1000, 10), np.arange(0, 1000, 2), np.arange(0, 2000, 5)),
     ],
 )
-def test_matcher_nearest_basic(target_ts, sensor1, sensor2):
-    sensor1 = ArraySensor(sensor1)
-    sensor2 = ArraySensor(sensor2)
+def test_nearest_basic(target_ts, sensor1, sensor2):
+    sensor1 = NumpyTimeseries(sensor1)
+    sensor2 = NumpyTimeseries(sensor2)
 
     matcher = Matcher(target_ts, [sensor1, sensor2], MatchingMethod.NEAREST)
 
@@ -45,13 +23,29 @@ def test_matcher_nearest_basic(target_ts, sensor1, sensor2):
         assert val1 == val2 == target
 
 
-def test_matcher_nearest_out_of_range():
+def test_nearest_out_of_range():
     target_ts = np.arange(1000)
-    sensor1 = ArraySensor(np.arange(-2000, -1000))
-    sensor2 = ArraySensor(np.arange(2000, 3000))
+    sensor1 = NumpyTimeseries(np.arange(-2000, -1000))
+    sensor2 = NumpyTimeseries(np.arange(2000, 3000))
 
     matcher = Matcher(target_ts, [sensor1, sensor2], MatchingMethod.NEAREST)
 
     for val1, val2 in matcher:
         assert val1 == -1001
         assert val2 == 2000
+
+
+def test_nearest_minimizes_distance():
+    ts1 = np.random.random_integers(0, 1000, 50)
+    ts1.sort()
+    sensor1 = NumpyTimeseries(ts1)
+
+    ts2 = np.random.random_integers(0, 1000, 50)
+    ts2.sort()
+    sensor2 = NumpyTimeseries(ts2)
+
+    matcher = Matcher(ts1, [sensor1, sensor2], MatchingMethod.NEAREST)
+
+    for a, b in matcher:
+        min_delta = np.min(np.abs(ts2 - a))
+        assert np.abs(a - b) == min_delta

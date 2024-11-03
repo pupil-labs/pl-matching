@@ -7,8 +7,6 @@ import pandas as pd
 
 from pupil_labs.video.array_like import ArrayLike
 
-TimesArray = npt.NDArray[np.number]
-
 
 class MatchingMethod(Enum):
     NEAREST = "nearest"
@@ -17,8 +15,13 @@ class MatchingMethod(Enum):
     INTERPOLATE = "interpolate"
 
 
+TimesArray = npt.NDArray[np.number]
+
+
 class Timeseries(ArrayLike):
     timestamps: TimesArray
+
+    def sample(self, target_ts: TimesArray, method: MatchingMethod) -> ArrayLike: ...
 
 
 class Matcher(ArrayLike[Sequence]):
@@ -26,9 +29,10 @@ class Matcher(ArrayLike[Sequence]):
         self,
         target_ts: TimesArray,
         timeseries: Timeseries | Sequence[Timeseries],
-        method: MatchingMethod,
+        method: MatchingMethod = MatchingMethod.NEAREST,
         tolerance: Optional[float] = None,
-        include_ts: bool = False,
+        include_timeseries_ts: bool = False,
+        include_target_ts: bool = False,
     ) -> None:
         if isinstance(timeseries, Timeseries):
             timeseries = [timeseries]
@@ -40,7 +44,8 @@ class Matcher(ArrayLike[Sequence]):
         self.timeseries = timeseries
         self.method = method
         self.tolerance = tolerance
-        self.include_ts = include_ts
+        self.include_timeseries_ts = include_timeseries_ts
+        self.include_target_ts = include_target_ts
 
         target_ts_df = pd.DataFrame(target_ts, columns=["ts"])
         target_ts_df.index.name = "target"
@@ -74,14 +79,23 @@ class Matcher(ArrayLike[Sequence]):
         if isinstance(key, int):
             result = []
             for ts, matched in zip(self.timeseries, self.matching_dfs):
-                target_idx = int(matched.loc[key, "data"])
+                target_idx = matched.loc[key, "data"]
+                if np.isnan(target_idx):
+                    result.append(None)
+                    continue
+                else:
+                    target_idx = int(target_idx)
                 val = ts[target_idx]
-                if self.include_ts:
+                if self.include_timeseries_ts:
                     val = (ts.timestamps[target_idx], val)
                 result.append(val)
 
-            if len(result) == 1:
-                return result[0]
+            if self.include_target_ts:
+                target_ts = self.target_ts[key]
+                result = (target_ts, *result)
+            else:
+                if len(result) == 1:
+                    return result[0]
 
             return result
         else:

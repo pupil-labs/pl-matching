@@ -21,8 +21,6 @@ TimesArray = npt.NDArray[np.number]
 class Timeseries(ArrayLike):
     timestamps: TimesArray
 
-    def sample(self, target_ts: TimesArray, method: MatchingMethod) -> ArrayLike: ...
-
 
 class Matcher(ArrayLike[Sequence]):
     def __init__(
@@ -81,7 +79,10 @@ class Matcher(ArrayLike[Sequence]):
             for ts, matched in zip(self.timeseries, self.matching_dfs):
                 target_idx = matched.loc[key, "data"]
                 if np.isnan(target_idx):
-                    result.append(None)
+                    val = None
+                    if self.include_timeseries_ts:
+                        val = (None, val)
+                    result.append(val)
                     continue
                 else:
                     target_idx = int(target_idx)

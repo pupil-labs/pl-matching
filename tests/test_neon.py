@@ -7,7 +7,7 @@ import pytest
 
 import pupil_labs.neon_recording as nr
 from pupil_labs.matching.matcher import Matcher, MatchingMethod
-from pupil_labs.neon_recording.sensors.numpy_timeseries import NumpyTimeseries
+from pupil_labs.neon_recording.numpy_timeseries import NumpyTimeseries
 
 
 @pytest.fixture
@@ -30,11 +30,11 @@ def test_scalar_match_itself(rec: nr.NeonRecording, sensor_name: str):
     sensor = getattr(rec, sensor_name)
     target_ts = sensor.timestamps
     matcher = Matcher(
-        target_ts, [sensor], MatchingMethod.NEAREST, include_sensor_ts=True
+        target_ts, [sensor], MatchingMethod.NEAREST, include_timeseries_ts=True
     )
 
     for i in range(len(matcher)):
-        t, _ = matcher[i][0]
+        t, _ = matcher[i]
         assert t == target_ts[i]
 
 

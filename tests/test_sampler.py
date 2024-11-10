@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 from pupil_labs.matching.matcher import Matcher, MatchingMethod
-from pupil_labs.neon_recording.sensors.numpy_timeseries import NumpyTimeseries
+from pupil_labs.neon_recording.numpy_timeseries import NumpyTimeseries
 
 
 @pytest.mark.parametrize(

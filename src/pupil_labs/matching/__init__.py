@@ -5,6 +5,6 @@ Functionality for matching timeseries data.
 
 from __future__ import annotations
 
-from .matcher import Matcher, MatchingMethod, TimesArray, Timeseries
+from .matcher import Matcher, MatchingMethod, Timeseries
 
-__all__: list[str] = ["Matcher", "Timeseries", "MatchingMethod", "TimesArray"]
+__all__: list[str] = ["Matcher", "Timeseries", "MatchingMethod"]

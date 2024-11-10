@@ -1,8 +1,7 @@
 from enum import Enum
-from typing import Iterator, Optional, Sequence, overload
+from typing import Iterator, Optional, Protocol, Sequence, overload, runtime_checkable
 
 import numpy as np
-import numpy.typing as npt
 import pandas as pd
 
 from pupil_labs.video.array_like import ArrayLike
@@ -15,17 +14,17 @@ class MatchingMethod(Enum):
     INTERPOLATE = "interpolate"
 
 
-TimesArray = npt.NDArray[np.number]
-
-
-class Timeseries(ArrayLike):
-    timestamps: TimesArray
+@runtime_checkable
+class Timeseries(ArrayLike, Protocol):
+    # TODO: can we be strictly typed without using a property?
+    @property
+    def timestamps(self) -> ArrayLike[int] | ArrayLike[float]: ...
 
 
 class Matcher(ArrayLike[Sequence]):
     def __init__(
         self,
-        target_ts: TimesArray,
+        target_ts: ArrayLike[int] | ArrayLike[float],
         timeseries: Timeseries | Sequence[Timeseries],
         method: MatchingMethod = MatchingMethod.NEAREST,
         tolerance: Optional[float] = None,

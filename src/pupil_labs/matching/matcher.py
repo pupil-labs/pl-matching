@@ -1,5 +1,12 @@
 from enum import Enum
-from typing import Iterator, Optional, Protocol, Sequence, overload, runtime_checkable
+from typing import (
+    Callable,
+    Generic,
+    Iterator,
+    Optional,
+    TypeVar,
+    overload,
+)
 
 import numpy as np
 import pandas as pd
@@ -14,54 +21,43 @@ class MatchingMethod(Enum):
     INTERPOLATE = "interpolate"
 
 
-@runtime_checkable
-class Timeseries(ArrayLike, Protocol):
-    # TODO: can we be strictly typed without using a property?
-    @property
-    def timestamps(self) -> ArrayLike[int] | ArrayLike[float]: ...
+T = TypeVar("T")
 
 
-class Matcher(ArrayLike[Sequence]):
+class MatchedIndividual(Generic[T], ArrayLike[T]):
     def __init__(
         self,
         target_ts: ArrayLike[int] | ArrayLike[float],
-        timeseries: Timeseries | Sequence[Timeseries],
+        timeseries: ArrayLike[T],
         method: MatchingMethod = MatchingMethod.NEAREST,
         tolerance: Optional[float] = None,
-        include_timeseries_ts: bool = False,
-        include_target_ts: bool = False,
+        get_timeseries_ts: Callable[
+            [ArrayLike[T]], ArrayLike[int] | ArrayLike[float]
+        ] = lambda timeseries: timeseries.timestamps,
     ) -> None:
-        if isinstance(timeseries, Timeseries):
-            timeseries = [timeseries]
-
-        if len(timeseries) == 0:
-            raise ValueError("At least one timeseries is required")
-
         self.target_ts = target_ts
         self.timeseries = timeseries
         self.method = method
         self.tolerance = tolerance
-        self.include_timeseries_ts = include_timeseries_ts
-        self.include_target_ts = include_target_ts
 
-        target_ts_df = pd.DataFrame(target_ts, columns=["ts"])
-        target_ts_df.index.name = "target"
-        target_ts_df.reset_index(inplace=True)
+        target_df = pd.DataFrame(target_ts, columns=["target_ts"])
+        target_df.index.name = "target"
+        target_df.reset_index(inplace=True)
 
-        dfs = []
-        for ts in timeseries:
-            df = pd.DataFrame(ts.timestamps, columns=["ts"])
-            df.index.name = "data"
-            df.reset_index(inplace=True)
-            dfs.append(df)
+        ts = get_timeseries_ts(timeseries)
+        data_df = pd.DataFrame(ts, columns=["data_ts"])
+        data_df.index.name = "data"
+        data_df.reset_index(inplace=True)
 
-        self.matching_dfs = []
         if method == MatchingMethod.NEAREST:
-            for df in dfs:
-                matched = pd.merge_asof(
-                    target_ts_df, df, on="ts", direction="nearest", tolerance=tolerance
-                )
-                self.matching_dfs.append(matched)
+            self.matching_df = pd.merge_asof(
+                target_df,
+                data_df,
+                left_on="target_ts",
+                right_on="data_ts",
+                direction="nearest",
+                tolerance=tolerance,
+            )
         else:
             raise NotImplementedError
 
@@ -69,38 +65,91 @@ class Matcher(ArrayLike[Sequence]):
         return len(self.target_ts)
 
     @overload
-    def __getitem__(self, key: int) -> Sequence: ...
+    def __getitem__(self, key: int) -> T: ...
     @overload
-    def __getitem__(self, key: slice) -> ArrayLike[Sequence]: ...
-    def __getitem__(self, key: int | slice) -> Sequence | ArrayLike[Sequence]:
+    def __getitem__(self, key: slice) -> ArrayLike[T]: ...
+    def __getitem__(self, key: int | slice) -> T | ArrayLike[T]:
         if isinstance(key, int):
-            result = []
-            for ts, matched in zip(self.timeseries, self.matching_dfs):
-                target_idx = matched.loc[key, "data"]
-                if np.isnan(target_idx):
-                    val = None
-                    if self.include_timeseries_ts:
-                        val = (None, val)
-                    result.append(val)
-                    continue
-                else:
-                    target_idx = int(target_idx)
-                val = ts[target_idx]
-                if self.include_timeseries_ts:
-                    val = (ts.timestamps[target_idx], val)
-                result.append(val)
+            if self.method == MatchingMethod.NEAREST:
+                data_index = self.matching_df.loc[key, "data"]
+                if np.isnan(data_index):
+                    return None
 
-            if self.include_target_ts:
-                target_ts = self.target_ts[key]
-                result = (target_ts, *result)
+                data_index = int(data_index)
             else:
-                if len(result) == 1:
-                    return result[0]
+                raise NotImplementedError
 
-            return result
+            return self.timeseries[data_index]
+
         else:
             raise NotImplementedError
 
-    def __iter__(self) -> Iterator[Sequence]:
+    def __iter__(self) -> Iterator[T]:
+        for i in range(len(self)):
+            yield self[i]
+
+
+class MatchedGroup(Generic[T], ArrayLike[T]):
+    def __init__(
+        self,
+        target_ts: ArrayLike[int] | ArrayLike[float],
+        timeseries: ArrayLike[T],
+        method: MatchingMethod = MatchingMethod.NEAREST,
+        tolerance: Optional[float] = None,
+        get_timeseries_ts: Callable[
+            [ArrayLike[T]], ArrayLike[int] | ArrayLike[float]
+        ] = lambda timeseries: timeseries.timestamps,
+    ) -> None:
+        self.target_ts = target_ts
+        self.timeseries = timeseries
+        self.method = method
+        self.tolerance = tolerance
+
+        target_df = pd.DataFrame(target_ts, columns=["target_ts"])
+        target_df.index.name = "target"
+        target_df.reset_index(inplace=True)
+
+        ts = get_timeseries_ts(timeseries)
+        data_df = pd.DataFrame(ts, columns=["data_ts"])
+        data_df.index.name = "data"
+        data_df.reset_index(inplace=True)
+
+        if method == MatchingMethod.NEAREST:
+            self.matching_df = (
+                pd.merge_asof(
+                    data_df,
+                    target_df,
+                    left_on="data_ts",
+                    right_on="target_ts",
+                    direction="nearest",
+                    tolerance=tolerance,
+                )
+                .set_index("target_ts")
+                .dropna()
+            )
+        else:
+            raise NotImplementedError
+
+    def __len__(self) -> int:
+        return len(self.target_ts)
+
+    def __getitem__(self, key: int | slice) -> ArrayLike[T]:
+        if isinstance(key, int):
+            if self.method == MatchingMethod.NEAREST:
+                target_ts = self.target_ts[key]
+                try:
+                    data_index = self.matching_df.loc[target_ts, "data"]
+                    data_index = data_index.values.astype(np.int64)
+                except KeyError:
+                    return None
+            else:
+                raise NotImplementedError
+
+            return self.timeseries[data_index]
+
+        else:
+            raise NotImplementedError
+
+    def __iter__(self) -> Iterator[ArrayLike[T]]:
         for i in range(len(self)):
             yield self[i]

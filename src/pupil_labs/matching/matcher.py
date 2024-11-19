@@ -32,7 +32,7 @@ class MatchedIndividual(Generic[T], ArrayLike[T]):
         method: MatchingMethod = MatchingMethod.NEAREST,
         tolerance: Optional[float] = None,
         get_timeseries_ts: Callable[
-            [ArrayLike[T]], ArrayLike[int] | ArrayLike[float]
+            [ArrayLike[T]], ArrayLike[int]
         ] = lambda timeseries: timeseries.timestamps,
     ) -> None:
         self.target_ts = target_ts
@@ -139,7 +139,11 @@ class MatchedGroup(Generic[T], ArrayLike[T]):
                 target_ts = self.target_ts[key]
                 try:
                     data_index = self.matching_df.loc[target_ts, "data"]
-                    data_index = data_index.values.astype(np.int64)
+                    if isinstance(data_index, pd.Series):
+                        data_index = data_index.values
+                    else:
+                        data_index = np.array([data_index])
+                    data_index = data_index.astype(np.int64)
                 except KeyError:
                     return None
             else:

@@ -5,8 +5,7 @@ import pandas as pd
 import pytest
 
 import pupil_labs.neon_recording as nr
-from pupil_labs.matching.matcher import MatchedIndividual, MatchingMethod
-from pupil_labs.neon_recording.numpy_timeseries import NumpyTimeseries
+from pupil_labs.matching import MatchingMethod, NumpyTimeseries, sample
 
 
 @pytest.fixture
@@ -28,7 +27,7 @@ def csv_export_path():
 def test_scalar_match_itself(rec: nr.NeonRecording, sensor_name: str):
     sensor = getattr(rec, sensor_name)
     target_ts = sensor.timestamps
-    matcher = MatchedIndividual(target_ts, sensor, MatchingMethod.NEAREST)
+    matcher = sample(target_ts, sensor, MatchingMethod.NEAREST)
 
     for i in range(len(matcher)):
         datum = matcher[i]
@@ -45,7 +44,7 @@ def test_scalar_match_itself(rec: nr.NeonRecording, sensor_name: str):
 def test_video_match_itself(rec: nr.NeonRecording, sensor_name: str):
     sensor = getattr(rec, sensor_name)
     target_ts = sensor.timestamps
-    matcher = MatchedIndividual(target_ts, sensor, MatchingMethod.NEAREST)
+    matcher = sample(target_ts, sensor, MatchingMethod.NEAREST)
 
     for i in range(len(matcher)):
         assert matcher[i].index == i
@@ -56,18 +55,17 @@ def test_rt_gaze_to_csv_gaze(
     csv_export_path: Path,
 ):
     csv_data = pd.read_csv(csv_export_path / "gaze.csv")
-    csv_data["timestamp [s]"] = csv_data["timestamp [ns]"] / 1e9
     csv_data = NumpyTimeseries(
-        csv_data["timestamp [s]"].values,
+        csv_data["timestamp [ns]"].values,
         csv_data[["gaze x [px]", "gaze y [px]"]].values,
     )
     target_ts = rec.gaze.timestamps
-    gaze_rt_data = MatchedIndividual(
+    gaze_rt_data = sample(
         target_ts,
         rec.gaze,
         MatchingMethod.NEAREST,
     )
-    gaze_csv_data = MatchedIndividual(
+    gaze_csv_data = sample(
         target_ts,
         csv_data,
         MatchingMethod.NEAREST,

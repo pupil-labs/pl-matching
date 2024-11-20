@@ -21,7 +21,9 @@ classifiers = [
 dependencies = [
     "pupil-labs-video",
     "pandas>=2.2.3",
+    "protobuf>=5.28.3",
     "pandas-stubs>=2.2.3.241009",
+    "numpy>=2.1.2",
 ]
 
 [project.urls]
@@ -75,3 +77,4 @@ source = ["pupil_labs"]
 
 [tool.deptry.per_rule_ignores]
 DEP001 = ["pupil_labs"]
+DEP002 = ["protobuf", "pandas-stubs"]

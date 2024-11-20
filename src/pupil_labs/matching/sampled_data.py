@@ -49,14 +49,14 @@ class SampledData(Generic[T], SampledDataBase, ArrayLike[Optional[T]]):
     def __getitem__(self, key: slice) -> "SampledData[T]": ...
     def __getitem__(self, key: int | slice) -> "Optional[T] | SampledData[T]":
         if isinstance(key, int):
-            if self.method == MatchingMethod.NEAREST:
+            if self.method == MatchingMethod.INTERPOLATE:
+                raise NotImplementedError
+            else:
                 data_index = self.matching_df.iloc[key]["data"]
                 if np.isnan(data_index):
                     return None
 
                 data_index = int(data_index)
-            else:
-                raise NotImplementedError
 
             result: Optional[T] = self.timeseries[data_index]
             return result

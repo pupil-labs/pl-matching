@@ -70,6 +70,7 @@ def sample(
         data_df.index.name = "data"
         data_df.reset_index(inplace=True)
 
+        # TODO: Support other methods
         if method == MatchingMethod.NEAREST:
             matching_df = (
                 pd.merge_asof(
@@ -104,22 +105,19 @@ def sample(
         data_df = pd.DataFrame(ts, columns=["data_ts"])
         data_df.index.name = "data"
         data_df.reset_index(inplace=True)
-        if method == MatchingMethod.INTERPOLATE:
-            raise NotImplementedError
-        else:
-            direction_map = {
-                MatchingMethod.NEAREST: "nearest",
-                MatchingMethod.BEFORE: "backward",
-                MatchingMethod.AFTER: "forward",
-            }
-            matching_df = pd.merge_asof(
-                target_df,
-                data_df,
-                left_on="target_ts",
-                right_on="data_ts",
-                direction=direction_map[method],
-                tolerance=tolerance,
-            )
+        direction_map = {
+            MatchingMethod.NEAREST: "nearest",
+            MatchingMethod.BEFORE: "backward",
+            MatchingMethod.AFTER: "forward",
+        }
+        matching_df = pd.merge_asof(
+            target_df,
+            data_df,
+            left_on="target_ts",
+            right_on="data_ts",
+            direction=direction_map[method],
+            tolerance=tolerance,
+        )
 
         return SampledData(
             target_ts,

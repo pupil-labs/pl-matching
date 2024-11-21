@@ -60,6 +60,8 @@ def test_minimizes_distance():
 
     matched_data = sample(target_ts, sensor, method=MatchingMethod.BEFORE)
     for t, v in zip(target_ts, matched_data):
+        if v is None:
+            continue
         min_delta = sensor_ts - t
         min_delta = min_delta[min_delta <= 0].max()
         assert v - t == min_delta

@@ -1008,20 +1008,24 @@ source = { editable = "../pl-neon-recording" }
 dependencies = [
     { name = "av" },
     { name = "numpy" },
+    { name = "pandas" },
     { name = "pupil-labs-matching" },
     { name = "pupil-labs-video" },
     { name = "scipy" },
     { name = "structlog" },
+    { name = "types-protobuf" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "av", specifier = ">=13.1.0" },
     { name = "numpy", specifier = ">=2.1.2" },
+    { name = "pandas", specifier = ">=2.2.3" },
     { name = "pupil-labs-matching", editable = "." },
     { name = "pupil-labs-video", editable = "../pl-video" },
     { name = "scipy", specifier = ">=1.14.1" },
     { name = "structlog", specifier = ">=24.4.0" },
+    { name = "types-protobuf", specifier = ">=5.28.3.20241030" },
 ]
 
 [package.metadata.requires-dev]
@@ -1425,6 +1429,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/03/0a/9fcf2fb003d76205b1abf2bed3bb0240bb932ff8058dfce0353bb2404240/tox_uv-1.15.0.tar.gz", hash = "sha256:a5f08c80a3eabc47881e378700e5044b67ba94b03181ae38246627127f6a9183", size = 16017 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/68/b7/fbcc8b5a278f76cad24f70efc13529d528160a1fc044f740175d7aa114bc/tox_uv-1.15.0-py3-none-any.whl", hash = "sha256:dfe7e48274248458349b47780da7db815c0156bd3751b6486152bbf01d7672fb", size = 13606 },
+]
+
+[[package]]
+name = "types-protobuf"
+version = "5.28.3.20241030"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/c8/d4/d186e43cfb38ecefc91315ee9193d5722a88d7a3c8eac34a3ed603377407/types-protobuf-5.28.3.20241030.tar.gz", hash = "sha256:f7e6b45845d75393fb41c0b3ce82c46d775f9771fae2097414a1dbfe5b51a988", size = 54665 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/72/da/c261bb44799d3f4455fc881ca342c14f5b5b23878bef568a1cdcd324e62f/types_protobuf-5.28.3.20241030-py3-none-any.whl", hash = "sha256:f3dae16adf342d4fb5bb3673cabb22549a6252e5dd66fc52d8310b1a39c64ba9", size = 68781 },
 ]
 
 [[package]]

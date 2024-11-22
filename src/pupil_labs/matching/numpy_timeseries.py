@@ -5,7 +5,7 @@ import numpy.typing as npt
 import pandas as pd
 
 from pupil_labs.matching.matching_method import MatchingMethod
-from pupil_labs.matching.sample import sample
+from pupil_labs.matching.sampled_data import SampledData
 from pupil_labs.video.array_like import ArrayLike
 
 
@@ -41,7 +41,7 @@ class NumpyTimeseries:
         target_ts: npt.NDArray[np.float64],
         method: MatchingMethod = MatchingMethod.NEAREST,
     ) -> ArrayLike:
-        return sample(target_ts, self, method)
+        return SampledData.sample(target_ts, self, method)
 
     @staticmethod
     def from_dataframe(df: pd.DataFrame, ts_column: str) -> "NumpyTimeseries":

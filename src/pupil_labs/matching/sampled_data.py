@@ -10,6 +10,7 @@ from pupil_labs.video.array_like import ArrayLike
 T = TypeVar("T", covariant=True)
 
 
+# TODO Make this a full NeonTimeseries
 class SampledData(Generic[T], ArrayLike[Optional[T]]):
     def __init__(
         self,
@@ -29,7 +30,7 @@ class SampledData(Generic[T], ArrayLike[Optional[T]]):
         tolerance: Optional[int] = None,
         get_timeseries_ts: Callable[
             [ArrayLike[T]], ArrayLike[int]
-        ] = lambda timeseries: timeseries.timestamps,  # type: ignore
+        ] = lambda timeseries: timeseries.abs_timestamp,  # type: ignore
     ) -> "SampledData[T]":
         target_ts = np.array(target_ts)
         target_df = pd.DataFrame(target_ts, columns=["target_ts"])
@@ -63,7 +64,7 @@ class SampledData(Generic[T], ArrayLike[Optional[T]]):
         return SampledData(target_ts, timeseries, matching_df)
 
     @property
-    def timestamps(self) -> npt.NDArray[np.int64]:
+    def abs_timestamp(self) -> npt.NDArray[np.int64]:
         return self._target_ts
 
     def __len__(self) -> int:
@@ -105,7 +106,7 @@ class SampledDataGroups(Generic[T]):
         tolerance: Optional[int] = None,
         get_timeseries_ts: Callable[
             [ArrayLike[T]], ArrayLike[int]
-        ] = lambda timeseries: timeseries.timestamps,  # type: ignore
+        ] = lambda timeseries: timeseries.abs_timestamp,  # type: ignore
     ) -> None:
         self._target_ts = np.array(target_ts, dtype=np.int64)
         self.timeseries = timeseries

@@ -26,12 +26,12 @@ def csv_export_path():
 )
 def test_scalar_match_itself(rec: nr.NeonRecording, sensor_name: str):
     sensor = getattr(rec, sensor_name)
-    target_ts = sensor.timestamps
+    target_ts = sensor.abs_timestamp
     matcher = SampledData.sample(target_ts, sensor, MatchingMethod.NEAREST)
 
     for i in range(len(matcher)):
         datum = matcher[i]
-        assert datum.ts == target_ts[i]
+        assert datum.abs_ts == target_ts[i]
 
 
 @pytest.mark.parametrize(
@@ -43,7 +43,7 @@ def test_scalar_match_itself(rec: nr.NeonRecording, sensor_name: str):
 )
 def test_video_match_itself(rec: nr.NeonRecording, sensor_name: str):
     sensor = getattr(rec, sensor_name)
-    target_ts = sensor.timestamps
+    target_ts = sensor.abs_timestamp
     matcher = SampledData.sample(target_ts, sensor, MatchingMethod.NEAREST)
 
     for i in range(len(matcher)):
@@ -59,7 +59,7 @@ def test_rt_gaze_to_csv_gaze(
         csv_data["timestamp [ns]"].values,
         csv_data[["gaze x [px]", "gaze y [px]"]].values,
     )
-    target_ts = rec.gaze.timestamps
+    target_ts = rec.gaze.abs_timestamp
     gaze_rt_data = SampledData.sample(
         target_ts,
         rec.gaze,
@@ -79,7 +79,7 @@ def test_rt_gaze_to_csv_gaze(
 
 
 def test_sampling_sampled_data(rec: nr.NeonRecording):
-    target_ts = rec.gaze.timestamps
+    target_ts = rec.gaze.abs_timestamp
     gaze_data = SampledData.sample(
         target_ts,
         rec.gaze,

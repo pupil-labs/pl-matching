@@ -12,14 +12,14 @@ from pupil_labs.video.array_like import ArrayLike
 class NumpyTimeseries:
     def __init__(
         self,
-        timestamps: npt.NDArray[np.int64],
+        abs_timestamp: npt.NDArray[np.int64],
         data: Optional[npt.NDArray] = None,
     ):
-        self.timestamps = timestamps
+        self.abs_timestamp = abs_timestamp
         if data is None:
-            self.data = timestamps
+            self.data = abs_timestamp
         else:
-            assert len(data) == len(timestamps)
+            assert len(data) == len(abs_timestamp)
             self.data = data
 
     @overload
@@ -30,7 +30,7 @@ class NumpyTimeseries:
         return self.data[key]
 
     def __len__(self) -> int:
-        return len(self.timestamps)
+        return len(self.abs_timestamp)
 
     def __iter__(self) -> Iterator[int]:
         for i in range(len(self)):

@@ -55,10 +55,10 @@ def test_out_of_range():
 
 
 def test_minimizes_distance():
-    target_ts = np.random.random_integers(0, 1000, 50)
+    target_ts = np.random.randint(0, 1000, 50)
     target_ts.sort()
 
-    sensor_ts = np.random.random_integers(0, 1000, 50)
+    sensor_ts = np.random.randint(0, 1000, 50)
     sensor_ts.sort()
     sensor = NumpyTimeseries(sensor_ts)
 

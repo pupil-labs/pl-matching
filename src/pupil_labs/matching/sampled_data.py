@@ -10,7 +10,6 @@ from pupil_labs.video.array_like import ArrayLike
 T = TypeVar("T", covariant=True)
 
 
-# TODO Make this a full NeonTimeseries
 class SampledData(Generic[T], ArrayLike[Optional[T]]):
     def __init__(
         self,
@@ -30,7 +29,7 @@ class SampledData(Generic[T], ArrayLike[Optional[T]]):
         tolerance: Optional[int] = None,
         get_timeseries_ts: Callable[
             [ArrayLike[T]], ArrayLike[int]
-        ] = lambda timeseries: timeseries.abs_timestamp,  # type: ignore
+        ] = lambda timeseries: timeseries.abs_timestamps,  # type: ignore
     ) -> "SampledData[T]":
         target_ts = np.array(target_ts)
         target_df = pd.DataFrame(target_ts, columns=["target_ts"])
@@ -102,17 +101,22 @@ class SampledDataGroups(Generic[T]):
         self,
         target_ts: ArrayLike[int],
         timeseries: ArrayLike[T],
+        matching_df: pd.DataFrame,
+    ) -> None:
+        self._target_ts = np.array(target_ts, dtype=np.int64)
+        self.timeseries = timeseries
+        self.matching_df = matching_df
+
+    @staticmethod
+    def sample(
+        target_ts: ArrayLike[int],
+        timeseries: ArrayLike[T],
         method: MatchingMethod = MatchingMethod.NEAREST,
         tolerance: Optional[int] = None,
         get_timeseries_ts: Callable[
             [ArrayLike[T]], ArrayLike[int]
-        ] = lambda timeseries: timeseries.abs_timestamp,  # type: ignore
-    ) -> None:
-        self._target_ts = np.array(target_ts, dtype=np.int64)
-        self.timeseries = timeseries
-        self.method = method
-        self.tolerance = tolerance
-
+        ] = lambda timeseries: timeseries.abs_timestamps,  # type: ignore
+    ) -> "SampledDataGroups[T]":
         target_ts = np.array(target_ts)
         target_df = pd.DataFrame(target_ts, columns=["target_ts"])
         target_df.index.name = "target"
@@ -124,25 +128,32 @@ class SampledDataGroups(Generic[T]):
         data_df.index.name = "data"
         data_df.reset_index(inplace=True)
 
-        # TODO: Support other methods
+        direction: Literal["nearest", "backward", "forward"]
         if method == MatchingMethod.NEAREST:
-            self.matching_df = (
-                pd.merge_asof(
-                    data_df,
-                    target_df,
-                    left_on="data_ts",
-                    right_on="target_ts",
-                    direction="nearest",
-                    tolerance=tolerance,
-                )
-                .set_index("target_ts")
-                .dropna()
-            )
+            direction = "nearest"
+        elif method == MatchingMethod.BEFORE:
+            direction = "backward"
+        elif method == MatchingMethod.AFTER:
+            direction = "forward"
         else:
-            raise NotImplementedError
+            raise ValueError(f"Invalid method: {method}")
+
+        matching_df = (
+            pd.merge_asof(
+                data_df,
+                target_df,
+                left_on="data_ts",
+                right_on="target_ts",
+                direction=direction,
+                tolerance=tolerance,
+            )
+            .set_index("target_ts")
+            .dropna()
+        )
+        return SampledDataGroups(target_ts, timeseries, matching_df)
 
     @property
-    def timestamps(self) -> npt.NDArray[np.int64]:
+    def abs_timestamps(self) -> npt.NDArray[np.int64]:
         return self._target_ts
 
     def __len__(self) -> int:
